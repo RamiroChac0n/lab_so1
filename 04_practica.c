@@ -18,8 +18,23 @@ int main(){
         {
             id = fork();
             if(id != 0){
-                printf("%c Soy: %d. Mi padre es: %d\n", letras[i], id, getpid());
+                printf("%c Soy: %d. Mi padre es: %d\n", letras[i], id, getpid());          
             }else{
+                if (letras[i] == 'C')
+                {
+
+                    // Hijos DE C de la F a la H
+                    for (int j = 5; j < 8; j++)
+                    {
+                        id = fork();
+                        if (id != 0)
+                        {
+                            printf("%c Soy: %d. Mi padre es: %d\n", letras[j], id, getpid());
+                        }else{
+                            break;
+                        }                            
+                    }
+                }
                 break;
             }
         }   
