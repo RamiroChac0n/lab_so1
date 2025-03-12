@@ -35,6 +35,25 @@ int main(){
                         }                            
                     }
                 }
+
+                if (letras[i] == 'E')
+                {
+                    // Hijo de E, I e hijo de I, J
+                    for (int x = 8; x < 10; x++)
+                    {
+                        id = fork();
+                        if (id != 0)
+                        {
+                            break;
+                        }else{
+                            printf("%c Soy: %d. Mi padre es: %d\n", letras[x], getpid(), getppid());
+                        }                            
+                    }
+                    if(id > 0) {
+                        wait(NULL);
+                    }                    
+                }
+                
                 break;
             }
         }   
