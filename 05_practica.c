@@ -1,52 +1,61 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <pthread.h>
-#include <sys/types.h>
+#include <string.h> // Para memset
 
-#define LENGTH 1000
-int numeros_p[LENGTH];
+#define MAX 1000
+#define NUM_HILOS 5
 
-typedef struct Limite
-{
-    int limInf;
-    int limSup;
-}Limite;
+typedef struct {
+    int inicio;
+    int fin;
+} Rango;
 
+int primos[MAX]; // Arreglo global para marcar los primos
 
-void *rutina(void *arg){
-    int *contador = 0;
-
-    for(int i = limInf; i <= limSup; i++){
-        if(i % 2 == 0){
-            contador++;
-        }
+int es_primo(int num) {
+    if (num < 2) return 0;
+    for (int i = 2; i * i <= num; i++) {
+        if (num % i == 0) return 0;
     }
+    return 1;
 }
 
-int main(){
+void* buscar_primos(void* arg) {
+    Rango* rango = (Rango*) arg;
 
-    int n_hilos = 5;
-    pthread_t hilos[n_hilos];
-
-    int l_segmento = LENGTH / n_hilos;
-
-    // ARREGLO DE REFERENCIA
-    for (int i = 0; i < LENGTH; i++)
-    {
-        numeros_p[i] = 0;
-    }
-    
-    // CREA LOS HILOS
-    for(int i = 0; i < n_hilos; i++){
-        Limite *l = malloc(sizeof(Limite));
-        l->limInf = i * l_segmento + 1;
-        l->limSup = (i + 1) * l_segmento;
-
-        if(pthread_create(&hilos[i], NULL, &rutina, (void*)l ) != 0){
+    for (int i = rango->inicio; i <= rango->fin; i++) {
+        if (es_primo(i)) {
+            primos[i] = 1; // Marcar como primo
         }
+    }
+
+    pthread_exit(NULL);
+}
+
+int main() {
+    pthread_t hilos[NUM_HILOS];
+    Rango rangos[NUM_HILOS];
+
+    memset(primos, 0, sizeof(primos)); // Inicializar el arreglo con 0
+
+    int intervalo = MAX / NUM_HILOS;
+
+    for (int i = 0; i < NUM_HILOS; i++) {
+        rangos[i].inicio = i * intervalo + 1;
+        rangos[i].fin = (i == NUM_HILOS - 1) ? MAX : (i + 1) * intervalo;
+        pthread_create(&hilos[i], NULL, buscar_primos, (void*)&rangos[i]);
+    }
+
+    for (int i = 0; i < NUM_HILOS; i++) {
+        pthread_join(hilos[i], NULL);
+    }
+
+    // Imprimir el resultado con la posición y el valor
+    printf("Posición -> Valor\n");
+    for (int i = 1; i < MAX; i++) {
+        printf("%d -> %d\n", i, primos[i]);
     }
 
     return 0;
 }
+
