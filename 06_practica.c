@@ -12,7 +12,6 @@ int buffer[MAX];
 //El semáforo vacios se usará para sincronizar la producción
 //El semáforo elementos sincronizará el consumo
 sem_t vacios, elementos;
-pthread_mutex_t mutex;
 
 int generar_dato() { return random() % 256; }
 int numero_aleatorio() { return random() % 100; }
@@ -36,22 +35,18 @@ void *productor(void *p)
         //Actualizar pos_productor
         dato = generar_dato();
         sem_wait(&vacios);
-        pthread_mutex_lock(&mutex);
         buffer[pos_productor] = dato;
         printf("Productor: buffer[%d] <= %d\n", pos_productor, dato);
         pos_productor = (pos_productor + 1) % MAX;
-        pthread_mutex_unlock(&mutex);
         sem_post(&elementos);
 
     }
 
     //Usa la constante fin para marcar que se ha concluido el trabajo del productor
     sem_wait(&vacios);
-    pthread_mutex_lock(&mutex);
     
     buffer[pos_productor] = FIN;
 
-    pthread_mutex_unlock(&mutex);
     sem_post(&elementos);  
 
     pthread_exit(NULL);
@@ -74,15 +69,13 @@ void *consumidor(void *p)
         if(dato == FIN) { //Cuando se ha leído el marcador de fin, se debe terminar el ciclo
             continuar = 0;
         }else {
-            printf("Numero aleatorio %d: buffer[%d] => %d\n", contador, pos_consumidor, dato);
             //Actualizar pos_consumidor
             sem_wait(&elementos);
-            pthread_mutex_lock(&mutex);
             dato = buffer[pos_consumidor];
             pos_consumidor = (pos_consumidor + 1) % MAX;
-            pthread_mutex_unlock(&mutex);
             sem_post(&vacios);
 
+            printf("Numero aleatorio %d: buffer[%d] => %d\n", contador, pos_consumidor, dato);
             if(dato == FIN) {
                 continuar = 0;
             }
@@ -95,19 +88,28 @@ void *consumidor(void *p)
 int main(int argc, char *argv[]) {
 
     //Inicializar el generador de números aleatorios
+    srandom(time(NULL));
 
     //Definicion de hilos productor y consumidor
+    pthread_t h_productor, h_consumidor;
 
     //Inicialización de semáforos
     // Vacios
     // Elementos
+    sem_init(&vacios, 0, MAX);
+    sem_init(&elementos, 0, 0);
 
     //Inicializar hilos
-
+    pthread_create(&h_productor, NULL, productor, NULL);
+    pthread_create(&h_consumidor, NULL, consumidor, NULL);
 
     //Join de los hilos
+    pthread_join(h_productor, NULL);
+    pthread_join(h_consumidor, NULL);
 
     //Destroy de semaforos
+    sem_destroy(&vacios);
+    sem_destroy(&elementos);
 
     return 0;
 
