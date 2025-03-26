@@ -71,11 +71,10 @@ void *consumidor(void *p)
         }else {
             //Actualizar pos_consumidor
             sem_wait(&elementos);
-            dato = buffer[pos_consumidor];
+            printf("Numero aleatorio %d: buffer[%d] => %d\n", contador, pos_consumidor, dato);
             pos_consumidor = (pos_consumidor + 1) % MAX;
             sem_post(&vacios);
 
-            printf("Numero aleatorio %d: buffer[%d] => %d\n", contador, pos_consumidor, dato);
             if(dato == FIN) {
                 continuar = 0;
             }
